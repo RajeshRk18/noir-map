@@ -148,7 +148,7 @@ impl<K, V, N> Map<K, V, N> {
         } else if found_collision {
             let collided_entry = self.entries[found_index];
             let found_key = collided_entry.key;
-
+            
             assert_eq(found_key, key);
 
             old_value = Option::some(collided_entry.value);
@@ -191,7 +191,10 @@ impl<K, V, N> Map<K, V, N> {
             self.entries[found_index] = Item::default();
             self.small_index = next.unwrap();
         } else if found_index == self.big_index {
+            println(self.entries[2]);
             let entry = self.entries[found_index];
+            println(f"FOUND INDEX: {found_index}");
+            println(entry);
             let previous = entry.previous.unwrap();
             self.entries[previous].next = Option::none();
             self.entries[found_index] = Item::default();
