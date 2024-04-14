@@ -6,20 +6,10 @@ struct Item<K, V> {
     value: V,
     // index of the previous value. It stores the index of the item whose key is immediately lesser than the current item key
     // none if the item has the smallest key
-    previous: Option<u64>,
+    previous: Option<u32>,
     // index of the next value. It stores the index of the item whose key is immediately greater than the current item key
     // none if the item has the largest key
-    next: Option<u64>,
-}
-
-impl<K, V> Item<K, V> {
-    unconstrained fn print(self) {
-        let key = self.key;
-        let value = self.value;
-        let previous = self.previous;
-        let next = self.next;
-        println(f"{key: {key} value: {value} previous: {previous} next: {next}}");
-    }
+    next: Option<u32>,
 }
 
 impl<K, V> Default for Item<K, V> where K: Default, V: Default {
@@ -39,13 +29,13 @@ impl<K, V> Default for Item<K, V> where K: Default, V: Default {
 struct Map<K, V, N> {
     entries: [Item<K, V>; N],
     // no of entries occupied
-    size: u64,
+    size: u32,
     // tracks if the map is empty
     is_empty: bool,
     // tracks the smallest and the largest entry (by keys) 
     // useful when inserting or removing the entries
-    small_index: u64,
-    big_index: u64,
+    small_index: u32,
+    big_index: u32,
 }
 
 impl<K, V, N> Map<K, V, N> {
@@ -60,7 +50,7 @@ impl<K, V, N> Map<K, V, N> {
         Self { entries, size, is_empty, small_index, big_index }
     }
 
-    unconstrained fn find_relative_key_location(self, key: K) -> (Option<u64>, Option<u64>, bool, bool, bool) 
+    unconstrained fn find_relative_key_location(self, key: K) -> (Option<u32>, Option<u32>, bool, bool, bool) 
     where K: Eq + Ord {
         let mut previous_index = Option::none();
         let mut next_index = Option::none();
@@ -69,7 +59,7 @@ impl<K, V, N> Map<K, V, N> {
         let mut insert_at_start = false;
         let mut insert_at_end = false;
 
-        for i in 0..self.size {
+        for i in 0..N {
             let entry = self.entries[i];
 
             // CASE1: Small index
@@ -80,20 +70,24 @@ impl<K, V, N> Map<K, V, N> {
                 previous_index = Option::none();
                 next_index = Option::some(i);
                 insert_at_start = true;
-            } else if entry.next.is_none() & (self.big_index == i) & (entry.key < key) & !self.is_empty {
+            } 
+            else if entry.next.is_none() & (self.big_index == i) & (entry.key < key) & !self.is_empty {
                 next_index = Option::none();
                 previous_index = Option::some(i);
                 insert_at_end = true;
-            } else if (entry.key < key)
+            } 
+            else if (entry.key < key)
                 & entry.previous.is_some()
                 & entry.next.is_some()
                 & !(self.small_index == i) {
+                // safe unwrap
                 if key < self.entries[entry.next.unwrap_unchecked()].key {
                     previous_index = Option::some(i);
                     next_index = Option::some(entry.next.unwrap());
                     insert_between_two_entries = true;
                 }
-            } else if (entry.key < key)
+            } 
+            else if (entry.key < key)
                 & entry.previous.is_none()
                 & entry.next.is_some()
                 & (self.small_index == i) {
@@ -145,23 +139,25 @@ impl<K, V, N> Map<K, V, N> {
         if self.is_empty {
             self.small_index = self.size;
             self.big_index = self.size;
-        } else if found_collision {
+        } 
+        else if found_collision {
             let collided_entry = self.entries[found_index];
             let found_key = collided_entry.key;
-            
             assert_eq(found_key, key);
-
             old_value = Option::some(collided_entry.value);
             self.entries[found_index].value = value;
-        } else if previous_index.is_none() {
+        } 
+        else if previous_index.is_none() {
             self.entries[next_index.unwrap_unchecked()].previous = Option::some(self.size);
             new_entry.next = next_index;
             self.small_index = self.size;
-        } else if next_index.is_none() {
+        } 
+        else if next_index.is_none() {
             self.entries[previous_index.unwrap_unchecked()].next = Option::some(self.size);
             new_entry.previous = previous_index;
             self.big_index = self.size;
-        } else {
+        } 
+        else {
             new_entry.previous = previous_index;
             new_entry.next = next_index;
             self.entries[previous_index.unwrap_unchecked()].next = Option::some(self.size);
@@ -169,7 +165,7 @@ impl<K, V, N> Map<K, V, N> {
         }
 
         self.entries[self.size] = new_entry;
-        self.size += 1 - found_collision as u64;
+        self.size += 1 - found_collision as u32;
         self.is_empty = false;
 
         old_value
@@ -177,7 +173,7 @@ impl<K, V, N> Map<K, V, N> {
 
     // Removes an entry from the map.
     // panics if the key is not in the map
-    pub fn remove(&mut self, key: K) -> Option<Field> 
+    pub fn remove(&mut self, key: K) -> Option<V> 
     where K: Eq + Default, V: Default {
         let mut value = Option::none();
 
@@ -185,21 +181,30 @@ impl<K, V, N> Map<K, V, N> {
 
         assert(found_collision);
 
-        if found_index == self.small_index {
-            let next = self.entries[found_index].next;
-            self.entries[self.entries[found_index].next.unwrap()].previous = Option::none();
+        let found_entry = self.entries[found_index];
+
+        // CASE1: if one entry is remaining
+        // CASE2: if small_index
+        // CASE3: if big_index
+        // CASE4: if other
+        if found_entry.next.is_none() & found_entry.previous.is_none() {
             self.entries[found_index] = Item::default();
+            self.is_empty = true;
+        } 
+        else if found_index == self.small_index {
+            let next = self.entries[self.small_index].next;
+            self.entries[self.entries[self.small_index].next.unwrap()].previous = Option::none();
+            self.entries[self.small_index] = Item::default();
             self.small_index = next.unwrap();
-        } else if found_index == self.big_index {
-            println(self.entries[2]);
-            let entry = self.entries[found_index];
-            println(f"FOUND INDEX: {found_index}");
-            println(entry);
+        } 
+        else if found_index == self.big_index {
+            let entry = self.entries[self.big_index];
             let previous = entry.previous.unwrap();
             self.entries[previous].next = Option::none();
-            self.entries[found_index] = Item::default();
+            self.entries[self.big_index] = Item::default();
             self.big_index = previous;
-        } else {
+        } 
+        else {
             let previous_index = self.entries[found_index].previous;
             let next_index = self.entries[found_index].next;
             self.entries[previous_index.unwrap()].next = self.entries[found_index].next;
@@ -207,6 +212,7 @@ impl<K, V, N> Map<K, V, N> {
             self.entries[found_index] = Item::default();
         }
 
+        value = Option::some(found_entry.value);
         self.size -= 1;
         self.is_empty = self.size == 0;
 
@@ -228,11 +234,13 @@ impl<K, V, N> Map<K, V, N> {
         index
     }
 
-    unconstrained fn check_for_collision(self, key: K) -> (u64, bool) 
+    // TODO: Should output true only if the occupied entry's key is zero  
+    // currently, this will output true even if an entry is unoccupied as default item's key is also zero.
+    unconstrained fn check_for_collision(self, key: K) -> (u32, bool) 
     where K: Eq {
-        let mut found_index: u64 = 0;
+        let mut found_index = 0;
         let mut found: bool = false;
-        for i in 0..self.size {
+        for i in 0..N {
             if (self.entries[i].key == key) {
                 found_index = i;
                 found = true;
@@ -264,13 +272,6 @@ impl<K, V, N> Map<K, V, N> {
         let index = self.find_key_location(key);
         assert(self.entries[index].key == key);
         self.entries[index]
-    }
-
-    unconstrained fn print(self) {
-        for i in 0..self.size as u64 {
-            let entry = self.entries[i];
-            entry.print();
-        }
     }
 }
 
