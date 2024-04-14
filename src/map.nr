@@ -219,7 +219,17 @@ impl<K, V, N> Map<K, V, N> {
         value
     }
 
-    // outputs the index of the key
+    // returns the number of entries
+    pub fn len(self) -> u32 {
+        self.size
+    }
+
+    // checks if the map is empty
+    pub fn is_empty(self) -> bool {
+        self.is_empty
+    }
+
+    // returns the index of the key
     unconstrained fn find_key_location(self, key: K) -> u32 
     where K: Eq {
         let mut found: bool = false;
@@ -228,6 +238,7 @@ impl<K, V, N> Map<K, V, N> {
             if (key == self.entries[i].key) {
                 index = i;
                 found = true;
+                break;
             }
         }
         assert(found == true);
@@ -244,6 +255,7 @@ impl<K, V, N> Map<K, V, N> {
             if (self.entries[i].key == key) {
                 found_index = i;
                 found = true;
+                break;
             }
         }
         (found_index, found)
@@ -258,7 +270,7 @@ impl<K, V, N> Map<K, V, N> {
         contains
     }
 
-    // outputs the value of the corresponding key
+    // returns the value of the corresponding key
     pub fn at(self, key: K) -> V 
     where K: Eq {
         let index = self.find_key_location(key);
@@ -266,13 +278,71 @@ impl<K, V, N> Map<K, V, N> {
         self.entries[index].value
     }
 
-    // outputs the item of the corrsponding key
+    // returns the item of the corrsponding key
     pub fn get(self, key: K) -> Item<K, V> 
     where K: Eq {
         let index = self.find_key_location(key);
         assert(self.entries[index].key == key);
         self.entries[index]
     }
+
+    // returns an array of keys in the map
+    pub fn keys(self) -> BoundedVec<K, N> 
+    where K: Eq + Default 
+    {
+        // TODO: Make this constrained
+        self.get_keys()
+    }
+
+    unconstrained fn get_keys(self) -> BoundedVec<K, N>
+    where K: Eq + Default 
+    {
+        let mut keys = BoundedVec::new();
+
+        for i in 0..N {
+            let entry = self.entries[i];
+            let is_final_entry = entry.next.is_none() & entry.previous.is_none() & !self.is_empty;
+
+            // we dont push unoccupied entry's key
+            if !is_final_entry {
+                continue;
+            }
+            keys.push(entry.key);
+        }
+
+        keys
+    }
+
+    pub fn values(self) -> BoundedVec<V, N>
+    where V: Default
+    {   
+        // TODO: Make this constrained
+        self.get_values()
+    }
+
+    unconstrained fn get_values(self) -> BoundedVec<V, N> 
+    where V: Default 
+    {
+        let mut values = BoundedVec::new();
+
+        for i in 0..N {
+            let entry = self.entries[i];
+            let is_final_entry = entry.next.is_none() & entry.previous.is_none() & !self.is_empty;
+
+            // we dont push unoccupied entry's value
+            if !is_final_entry {
+                continue;
+            }
+            values.push(entry.value);
+        }
+
+        values        
+    }
+
+    /*pub fn clear(&mut self) {
+        Map::default()
+    }*/
+
 }
 
 impl<K, V, N> Default for Map<K, V, N> where K: Default, V: Default {
