@@ -1,6 +1,8 @@
 ## Noir Map
 
-Implementation of map key sorted using linked list.
+Implementation of map using key sorted linked list.
+
+--- 
 
 ### Usage
 
@@ -14,6 +16,8 @@ let value = some_map.remove(76);
 assert(value.is_some());
 assert(value.unwrap() == 2098);
 ```
+
+--- 
 
 ### Methods
 
@@ -47,6 +51,8 @@ Returns all the values in the map.
 #### Map::default
 Creates an instance of the map.
 
+--- 
+
 ### Benchmarks
 
 This is measured after 3 insertions. 
@@ -59,7 +65,7 @@ insert | 46151
 remove | 47995
 get | 5234
 
-### Map (This implementation)
+#### Map (This implementation)
 
 | Methods | Number of Gates |
 | ------- | --------------- |
