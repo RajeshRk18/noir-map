@@ -32,10 +32,10 @@ Checks if the map is empty.
 #### Map::contains_key
 Checks if the given key exists in the map.
 
-#### Map::at
+#### Map::get
 Returns the value of the corresponding key.
 
-#### Map::get
+#### Map::at
 Returns the item of the corrsponding key.
 
 #### Map::keys
@@ -46,3 +46,23 @@ Returns all the values in the map.
 
 #### Map::default
 Creates an instance of the map.
+
+### Benchmarks
+
+This is measured after 3 insertions. 
+
+#### Noir standard library's HashMap
+
+| Methods | Number of Gates |
+| ------- | --------------- |
+insert | 46151
+remove | 47995
+get | 5234
+
+### Map (This implementation)
+
+| Methods | Number of Gates |
+| ------- | --------------- |
+insert | 7998 (5.77x)
+removal |  16302 (2.94x)
+get | 4085 (1.28x)

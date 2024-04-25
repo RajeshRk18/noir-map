@@ -271,7 +271,7 @@ impl<K, V, N> Map<K, V, N> {
     }
 
     // returns the value of the corresponding key
-    pub fn at(self, key: K) -> V 
+    pub fn get(self, key: K) -> V 
     where K: Eq {
         let index = self.find_key_location(key);
         assert(self.entries[index].key == key);
@@ -279,7 +279,7 @@ impl<K, V, N> Map<K, V, N> {
     }
 
     // returns the item of the corrsponding key
-    pub fn get(self, key: K) -> Item<K, V> 
+    pub fn at(self, key: K) -> Item<K, V> 
     where K: Eq {
         let index = self.find_key_location(key);
         assert(self.entries[index].key == key);
