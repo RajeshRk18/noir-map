@@ -34,7 +34,7 @@ get | 5388
 | Methods | Number of Gates |
 | ------- | --------------- |
 insert | 24 (~195x)
-removal | 255  16302 (~39x)
+removal | 255 (~39x)
 get | 34 (~159x)
 
 ## Limitations
