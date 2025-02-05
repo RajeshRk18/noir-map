@@ -39,4 +39,4 @@ get | 34 (~159x)
 
 ## Limitations
 
-`Field` type cannot be key as the key involves `ParitalOrd` and `PartialEq` which is not possible for `Field`.
+`Field` type cannot be key as the key involves `Ord` and `Eq` which is not supported.
